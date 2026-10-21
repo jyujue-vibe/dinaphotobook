@@ -1,0 +1,25 @@
+# Dina Prompt Library — v3 SPEC (from user's working prompts, 2026-10-21)
+
+Source formula: ~/workspace/user/files/workingprompts.pdf — prompts the user verified as "လုံးဝအလန်း အလုပ်လုပ်တယ်". Rewrite every library prompt in this exact writing style/density, keeping each entry's own outfit / pose / setting / framing from its reference photo.
+
+## HARD RULES
+1. Subject is referred to ONLY as "a woman" and "she/her". NEVER "Dina", never a name, never "Dina is...". (User direction 2026-10-21.)
+2. NO identity description in text: no hair color/length, no ethnicity, no beauty mark, no face features. The face comes from the reference image — locked by the footer clause below. Hair may appear only as part of a pose/action ("her fingers gather her hair"), never described.
+3. Factual register only. BANNED words: seductive, erotic, provocative, sensual, sexy. Spicy entries are described AS-IS, factually — garment coverage, cut and exposed areas stated plainly and mechanically, exactly like the working prompts describe a cheeky bikini cut. Never tone a spicy entry down; never add suggestive adjectives either.
+4. Length: 420–650 words per prompt. Dense, flowing prose. No bullet points, no labels ("Pose:", "Outfit:"), no headers inside the prompt.
+5. Every prompt ends with the EXACT footer (below), verbatim, as its final paragraph.
+
+## STRUCTURE (in this order, flowing prose)
+1. **Opening** — photography treatment matched to the reference photo (posed/catalogue refs → "Professional … catalogue photography."; casual refs → "Candid lifestyle photograph."; selfie refs → front-camera smartphone selfie treatment with its natural slight wide-angle look), then the figure spec woven in: "a woman with an extreme pear-shaped hourglass figure — large bust, extraordinarily wide hips, slim waist, and thick thighs". State the framing explicitly (full body head-to-toe / three-quarter / upper body — follow the reference photo's actual framing). For full-body framings add: full figure visible from head to toe without any cropping.
+2. **Pose mechanics** — the entry's exact pose expanded to body mechanics: which leg bears weight, hip pushed/shifted which way, shoulders angled opposite or not, spine curve, every arm and hand placement and what the hands are doing, head tilt/turn, gaze direction and target. Describe it as a candid in-between MOMENT (caught mid-action, relaxed asymmetric balance, genuine expression per the entry's mood) — never a frozen statue. Include what the pose does visually (elongates the torso, opens the frame, draws the eye along the figure) where natural.
+3. **Setting & light** — the entry's real setting in concrete detail: named background elements, mid-ground/background depth, surfaces. Then the lighting: source, direction, quality (soft/hard, diffused), how it falls across the figure and creates dimensional modelling, matched to the reference.
+4. **Outfit + fabric–body interaction** — garment by garment: type, cut, neckline, straps, waistband position, hemline position, pattern, material. THEN how each garment behaves on THIS figure: where fabric pulls taut across the bust, how it follows the narrowed waist, how it stretches/fans/drapes across the extraordinarily wide hips and thick thighs, tension lines, where it cannot lie flat. Factual and mechanical, like the working prompts.
+5. **Figure re-assertion from the camera's angle** — restate the pear-shaped silhouette as THIS camera angle actually sees it: front view → the sharp contrast between the narrow waist and the hip line flaring beyond the shoulder line; back view → width, lift and rearward projection, each side separately defined; side/three-quarter → the dramatic rearward arc projecting beyond the body's side outline, the continuous curve from lower back to fullest point. Close this section with the anti-normalization clause, varied naturally: proportions rendered with complete three-dimensional volume — do not flatten, compress, or minimize any of these features.
+6. **Footer (EXACT, verbatim, final paragraph):**
+"Preserve the subject's face exactly as provided in the reference image: maintain precise facial bone structure, skin tone, eye shape, brow arch, lip form, and all distinguishing features with zero alteration. Reconstruct and refine micro-level details including precise facial contours, authentic skin texture with naturally visible pores, individually defined hair strands, sharp and lifelike eyes, and clean, well-resolved edges throughout the image. Enhance dynamic range, contrast, and dimensional depth using balanced, studio-quality cinematic lighting that respects the original light direction and scene realism. Output in true 8K resolution with production-grade clarity comparable to Pro Res quality. Ratio 3:4."
+
+## INPUT FIELDS PER ENTRY
+account, file, outfit, pose, camera, lighting, setting, mood, spicy, tags, and prompt_scene (the v2 prompt — use it as the scene-content reference for what the photo shows; do NOT copy its wording or its subject name).
+
+## OUTPUT
+A JSON array: [{"id": "<entry id>", "prompt_v3": "<full prompt text>"}] — one object per entry in your slice, same order.
