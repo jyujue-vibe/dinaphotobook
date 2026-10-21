@@ -22,7 +22,7 @@ Prompt library for generating images of **Dina**, an AI influencer character, wi
 
 ## Stats
 
-- 186 entries from 5 reference accounts: realjennycoox (10), sueainsi_ (13), lex_jariya (56), aommwarang (42), vjessna (65)
+- 186 entries from 5 reference accounts: realjennycoox (10), sueainsi_ (13), lex_jariya (56), aommwarang (42), vjessna (65), nangaomyingkham (48 kept of 60 — face-visible posing shots only, per selection rule)
 - Spicy levels: none 113 / mild 57 / spicy 16 (kept as-is; spicy entries are for paid platforms, the rest are Instagram-safe)
 - v3 word counts: 420–597 per prompt (avg 476)
 
