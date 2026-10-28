@@ -1,0 +1,909 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>Prompt Builder</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <style>
+      :root{
+        --bg:#f2f3f1;
+        --surface:#ffffff;
+        --surface-2:#e9ebe7;
+        --ink:#17191d;
+        --ink-2:#4b5058;
+        --ink-3:#7c828c;
+        --line:#d8dad4;
+        --line-strong:#b9bcb2;
+        --accent:#e8490f;
+        --accent-ink:#ffffff;
+        --accent-soft:#fdeee6;
+        --good:#0e7c5b;
+        --good-soft:#e2f2ec;
+        --output-bg:#17191d;
+        --output-ink:#f2f0e9;
+        --output-ink-2:#a9adb5;
+        --radius:14px;
+        --shadow:0 1px 2px rgba(20,22,26,.05),0 8px 24px rgba(20,22,26,.05);
+      }
+      @media (prefers-color-scheme: dark){
+        :root{
+          --bg:#101215;
+          --surface:#191c20;
+          --surface-2:#22262c;
+          --ink:#f0f1ee;
+          --ink-2:#b6bac0;
+          --ink-3:#848b94;
+          --line:#2e333a;
+          --line-strong:#454c55;
+          --accent:#ff6a2b;
+          --accent-soft:#3a2115;
+          --good:#3ecf9e;
+          --good-soft:#143127;
+          --output-bg:#0b0c0e;
+          --output-ink:#f2f0e9;
+          --output-ink-2:#9aa0a8;
+          --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+        }
+      }
+      *{box-sizing:border-box}
+      html{-webkit-text-size-adjust:100%}
+      body{
+        margin:0;background:var(--bg);color:var(--ink);
+        font-family:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+        font-size:15px;line-height:1.55;
+      }
+      button{font:inherit;cursor:pointer;color:inherit}
+      input,select,textarea{font:inherit;color:inherit}
+      :focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+
+      .wrap{max-width:1280px;margin:0 auto;padding:28px 20px 64px}
+
+      /* ---------- intro ---------- */
+      .intro{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px 28px;padding-bottom:22px;border-bottom:2px solid var(--ink)}
+      .intro h1{
+        font-family:"Archivo",sans-serif;font-weight:800;letter-spacing:-.02em;
+        font-size:clamp(30px,4.5vw,44px);line-height:1.05;margin:0 0 8px;
+      }
+      .intro p{margin:0;color:var(--ink-2);max-width:56ch;font-size:15.5px}
+      .intro-actions{display:flex;gap:8px;flex-wrap:wrap}
+      .btn{
+        display:inline-flex;align-items:center;gap:7px;min-height:42px;
+        padding:9px 16px;border-radius:10px;border:1px solid var(--line-strong);
+        background:var(--surface);font-weight:600;font-size:14px;text-decoration:none;
+        transition:border-color .15s,background .15s,transform .1s;
+      }
+      .btn:hover{border-color:var(--ink)}
+      .btn:active{transform:translateY(1px)}
+      .btn svg{width:16px;height:16px;flex:none}
+      .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+      .btn.primary:hover{background:var(--accent);opacity:.92}
+      .btn.ghost{background:transparent}
+
+      /* ---------- presets ---------- */
+      .presets{margin:22px 0 4px}
+      .presets-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+      .presets-head h2{font-family:"Archivo",sans-serif;font-size:16px;font-weight:700;margin:0}
+      .presets-head span{color:var(--ink-3);font-size:13px}
+      .preset-row{display:flex;flex-wrap:wrap;gap:8px}
+      .preset{
+        padding:9px 15px;min-height:40px;border-radius:999px;border:1px solid var(--line-strong);
+        background:var(--surface);font-weight:600;font-size:13.5px;
+      }
+      .preset:hover{border-color:var(--accent);color:var(--accent)}
+      .preset.active{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+
+      /* ---------- layout ---------- */
+      .layout{display:grid;grid-template-columns:minmax(0,1fr) 430px;gap:22px;margin-top:22px;align-items:start}
+      @media (max-width:1020px){.layout{grid-template-columns:1fr}}
+
+      .panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+      .form-panel{padding:6px 22px 10px}
+      @media (max-width:560px){.form-panel{padding:4px 16px 8px}}
+
+      .group{padding:18px 0 20px;border-bottom:1px solid var(--line)}
+      .group:last-child{border-bottom:none}
+      .group-head{display:flex;align-items:baseline;gap:10px;margin-bottom:14px}
+      .group-num{
+        font-family:"JetBrains Mono",monospace;font-size:12px;font-weight:500;color:var(--accent);
+        border:1px solid currentColor;border-radius:6px;padding:1px 7px;line-height:1.5;
+      }
+      .group-head h3{font-family:"Archivo",sans-serif;font-size:17px;font-weight:700;margin:0}
+      .group-head p{margin:0 0 0 auto;color:var(--ink-3);font-size:12.5px;text-align:right}
+      @media (max-width:560px){.group-head p{display:none}}
+
+      .field{margin-bottom:14px}
+      .field:last-child{margin-bottom:0}
+      .field label{display:block;font-weight:600;font-size:13.5px;margin-bottom:6px}
+      .field label .req{color:var(--accent)}
+      .field label .hint{font-weight:400;color:var(--ink-3);font-size:12.5px}
+      .field input[type="text"],.field textarea,.field select{
+        width:100%;background:var(--bg);border:1px solid var(--line-strong);border-radius:10px;
+        padding:10px 12px;font-size:14.5px;line-height:1.5;
+      }
+      .field textarea{resize:vertical;min-height:44px}
+      .field input::placeholder,.field textarea::placeholder{color:var(--ink-3)}
+      .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+      @media (max-width:640px){.grid2{grid-template-columns:1fr}}
+      .grid2 .field{margin-bottom:0}
+      .row-gap{margin-bottom:14px}
+
+      /* chips */
+      .chip-label{font-weight:600;font-size:13.5px;margin:0 0 8px}
+      .chips{display:flex;flex-wrap:wrap;gap:7px}
+      .chip{
+        padding:7px 13px;min-height:36px;border-radius:999px;border:1px solid var(--line-strong);
+        background:var(--surface);font-size:13px;font-weight:500;line-height:1.3;
+      }
+      .chip:hover{border-color:var(--ink)}
+      .chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+      .chip.neg[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+      .chip.ratio[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:#fff}
+
+      /* ---------- output ---------- */
+      .output-col{position:sticky;top:18px;display:flex;flex-direction:column;gap:16px}
+      @media (max-width:1020px){.output-col{position:static}}
+      .output-panel{background:var(--output-bg);color:var(--output-ink);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
+      .output-head{padding:16px 18px 0}
+      .output-head h3{font-family:"Archivo",sans-serif;font-size:16px;font-weight:700;margin:0 0 12px}
+      .format-tabs{display:flex;flex-wrap:wrap;gap:6px}
+      .ftab{
+        padding:7px 12px;min-height:36px;border-radius:8px;border:1px solid #3a3f47;
+        background:transparent;color:var(--output-ink-2);font-size:13px;font-weight:600;
+      }
+      .ftab[aria-pressed="true"]{background:var(--output-ink);color:#17191d;border-color:var(--output-ink)}
+      .prompt-box{
+        margin:14px 18px 0;padding:14px;border:1px solid #33373f;border-radius:10px;background:rgba(255,255,255,.03);
+        font-family:"JetBrains Mono",monospace;font-size:13px;line-height:1.65;white-space:pre-wrap;word-break:break-word;
+        max-height:340px;overflow:auto;
+      }
+      .prompt-box.empty{color:var(--output-ink-2)}
+      .prompt-box .sec{color:#ffb59a}
+      .neg-wrap{margin:12px 18px 0}
+      .neg-wrap .neg-title{font-size:12px;font-weight:600;color:var(--output-ink-2);margin:0 0 6px;letter-spacing:.02em}
+      .neg-box{
+        padding:11px 14px;border:1px dashed #3d434c;border-radius:10px;
+        font-family:"JetBrains Mono",monospace;font-size:12.5px;line-height:1.6;color:#e8c9bd;
+        white-space:pre-wrap;word-break:break-word;max-height:130px;overflow:auto;
+      }
+      .neg-box.empty{color:var(--output-ink-2)}
+      .stats{display:flex;gap:16px;flex-wrap:wrap;padding:12px 18px 0;font-size:12.5px;color:var(--output-ink-2);font-family:"JetBrains Mono",monospace}
+      .output-actions{display:flex;flex-wrap:wrap;gap:8px;padding:14px 18px 18px}
+      .obtn{
+        display:inline-flex;align-items:center;gap:7px;min-height:42px;padding:9px 14px;border-radius:10px;
+        border:1px solid #3a3f47;background:transparent;color:var(--output-ink);font-weight:600;font-size:13.5px;
+      }
+      .obtn svg{width:15px;height:15px}
+      .obtn:hover{border-color:var(--output-ink)}
+      .obtn.primary{background:var(--accent);border-color:var(--accent);color:#fff;flex:1;justify-content:center}
+      .obtn:disabled{opacity:.45;cursor:not-allowed}
+
+      /* variations + history */
+      .side-panel{padding:18px}
+      .side-panel h3{font-family:"Archivo",sans-serif;font-size:15.5px;font-weight:700;margin:0 0 4px}
+      .side-panel .sub{color:var(--ink-3);font-size:13px;margin:0 0 12px}
+      .var-card{border:1px solid var(--line);border-radius:10px;padding:12px 13px;margin-bottom:10px;background:var(--bg)}
+      .var-card:last-child{margin-bottom:0}
+      .var-card .var-tag{font-family:"JetBrains Mono",monospace;font-size:11.5px;color:var(--accent);margin:0 0 5px;font-weight:500}
+      .var-card p{margin:0 0 10px;font-size:13px;line-height:1.55;color:var(--ink-2);word-break:break-word}
+      .mini-btn{
+        display:inline-flex;align-items:center;gap:6px;padding:6px 11px;min-height:34px;border-radius:8px;
+        border:1px solid var(--line-strong);background:var(--surface);font-size:12.5px;font-weight:600;
+      }
+      .mini-btn svg{width:13px;height:13px}
+      .mini-btn:hover{border-color:var(--ink)}
+      .hist-item{display:flex;gap:8px;align-items:flex-start;border-top:1px solid var(--line);padding:10px 0}
+      .hist-item:first-of-type{border-top:none}
+      .hist-item p{margin:0;font-size:12.5px;color:var(--ink-2);line-height:1.5;flex:1;word-break:break-word;
+        display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+      .empty-note{color:var(--ink-3);font-size:13px;margin:0}
+
+      .toast{
+        position:fixed;left:50%;bottom:22px;transform:translate(-50%,16px);z-index:50;
+        background:var(--ink);color:var(--bg);padding:11px 18px;border-radius:10px;font-weight:600;font-size:14px;
+        opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;box-shadow:0 10px 30px rgba(0,0,0,.25);
+        max-width:calc(100vw - 32px);text-align:center;
+      }
+      .toast.show{opacity:1;transform:translate(-50%,0)}
+      .foot-note{margin-top:26px;color:var(--ink-3);font-size:12.5px;text-align:center}
+      @media (prefers-reduced-motion: reduce){
+        *{transition:none !important}
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+
+      <header class="intro">
+        <div>
+          <h1>Prompt Builder</h1>
+          <p>Fill in the pieces — subject, scene, look, camera — and get a clean, ready-to-paste prompt for image, video, and text models. Everything updates live as you type.</p>
+        </div>
+        <div class="intro-actions">
+          <button class="btn" id="btn-random" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8.5" cy="8.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="15.5" cy="15.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="15.5" cy="8.5" r="1.4" fill="currentColor" stroke="none"/><circle cx="8.5" cy="15.5" r="1.4" fill="currentColor" stroke="none"/></svg>
+            Surprise me
+          </button>
+          <button class="btn ghost" id="btn-clear-top" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+            Clear all
+          </button>
+        </div>
+      </header>
+
+      <section class="presets" aria-label="Starter templates">
+        <div class="presets-head">
+          <h2>Start from a template</h2>
+          <span>Loads a full set of fields — edit anything after.</span>
+        </div>
+        <div class="preset-row" id="preset-row"></div>
+      </section>
+
+      <div class="layout">
+        <!-- ============ FORM ============ -->
+        <form class="panel form-panel" id="builder-form" autocomplete="off">
+
+          <section class="group" aria-labelledby="g1">
+            <div class="group-head"><span class="group-num">01</span><h3 id="g1">Subject</h3><p>The who or what</p></div>
+            <div class="field">
+              <label for="f-subject">Subject <span class="req">*</span> <span class="hint">— the main focus, in a few words</span></label>
+              <input type="text" id="f-subject" placeholder="e.g. a young woman with long black hair" />
+            </div>
+            <div class="field">
+              <label for="f-details">Appearance &amp; details <span class="hint">— face, hair, body, distinctive features</span></label>
+              <textarea id="f-details" rows="2" placeholder="e.g. warm brown eyes, soft natural makeup, small mole on the left cheek, athletic build"></textarea>
+            </div>
+            <div class="grid2">
+              <div class="field">
+                <label for="f-action">Action / pose</label>
+                <input type="text" id="f-action" placeholder="e.g. standing, looking over her shoulder" />
+              </div>
+              <div class="field">
+                <label for="f-expression">Expression / mood</label>
+                <input type="text" id="f-expression" placeholder="e.g. calm confident smile" />
+              </div>
+            </div>
+          </section>
+
+          <section class="group" aria-labelledby="g2">
+            <div class="group-head"><span class="group-num">02</span><h3 id="g2">Scene</h3><p>Where it happens</p></div>
+            <div class="field">
+              <label for="f-setting">Setting / background</label>
+              <input type="text" id="f-setting" placeholder="e.g. a quiet café by a large window, rainy street outside" />
+            </div>
+            <div class="grid2 row-gap">
+              <div class="field">
+                <label for="f-outfit">Outfit / materials</label>
+                <input type="text" id="f-outfit" placeholder="e.g. cream knit sweater, blue jeans" />
+              </div>
+              <div class="field">
+                <label for="f-props">Props &amp; extra elements</label>
+                <input type="text" id="f-props" placeholder="e.g. holding a paper cup, small shoulder bag" />
+              </div>
+            </div>
+            <div class="field">
+              <label for="f-colors">Color palette <span class="hint">— or tap a palette below</span></label>
+              <input type="text" id="f-colors" placeholder="e.g. warm earth tones with soft cream and brown" />
+            </div>
+            <div class="chips" id="palette-chips" role="group" aria-label="Palette presets"></div>
+          </section>
+
+          <section class="group" aria-labelledby="g3">
+            <div class="group-head"><span class="group-num">03</span><h3 id="g3">Look &amp; camera</h3><p>How it is shot</p></div>
+            <div class="field">
+              <p class="chip-label" id="style-label">Style <span style="font-weight:400;color:var(--ink-3);font-size:12.5px">— pick any that apply</span></p>
+              <div class="chips" id="style-chips" role="group" aria-labelledby="style-label"></div>
+            </div>
+            <div class="grid2 row-gap">
+              <div class="field">
+                <label for="f-lighting">Lighting</label>
+                <select id="f-lighting">
+                  <option value="">— Not specified —</option>
+                  <option>soft natural daylight</option>
+                  <option>golden hour sunlight</option>
+                  <option>overcast diffused light</option>
+                  <option>direct harsh flash</option>
+                  <option>studio softbox lighting</option>
+                  <option>dramatic side lighting</option>
+                  <option>neon night lighting</option>
+                  <option>candlelight, warm and dim</option>
+                  <option>blue hour twilight</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="f-camera">Camera / lens</label>
+                <select id="f-camera">
+                  <option value="">— Not specified —</option>
+                  <option>shot on 85mm lens, shallow depth of field</option>
+                  <option>shot on 35mm lens, environmental portrait</option>
+                  <option>shot on 50mm lens, natural perspective</option>
+                  <option>wide-angle 24mm lens</option>
+                  <option>telephoto 135mm lens, compressed background</option>
+                  <option>macro lens, extreme close-up detail</option>
+                  <option>2000s digicam look, direct flash</option>
+                  <option>35mm film photograph, visible grain</option>
+                  <option>medium format film look</option>
+                  <option>smartphone photo, casual snapshot</option>
+                </select>
+              </div>
+            </div>
+            <div class="grid2">
+              <div class="field">
+                <label for="f-composition">Composition / framing</label>
+                <select id="f-composition">
+                  <option value="">— Not specified —</option>
+                  <option>full-body shot, head to toe in frame</option>
+                  <option>waist-up shot</option>
+                  <option>close-up portrait, head and shoulders</option>
+                  <option>extreme close-up of the face</option>
+                  <option>side profile view</option>
+                  <option>three-quarter view</option>
+                  <option>shot from behind, looking back</option>
+                  <option>low-angle shot, looking up</option>
+                  <option>high-angle shot, looking down</option>
+                  <option>centered composition, symmetrical</option>
+                  <option>rule-of-thirds composition</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="f-detail">Detail level</label>
+                <select id="f-detail">
+                  <option value="">Standard</option>
+                  <option value="highly detailed, sharp focus">Detailed</option>
+                  <option value="ultra-detailed, intricate details, sharp focus, 8k quality">Ultra-detailed</option>
+                </select>
+              </div>
+            </div>
+          </section>
+
+          <section class="group" aria-labelledby="g4">
+            <div class="group-head"><span class="group-num">04</span><h3 id="g4">Format</h3><p>Size of the result</p></div>
+            <div class="field">
+              <p class="chip-label" id="ratio-label">Aspect ratio</p>
+              <div class="chips" id="ratio-chips" role="group" aria-labelledby="ratio-label"></div>
+            </div>
+            <div class="field">
+              <label for="f-extra">Extra instructions <span class="hint">— anything else, added at the end</span></label>
+              <textarea id="f-extra" rows="2" placeholder="e.g. no text in the image, keep the background uncluttered, photorealistic skin texture"></textarea>
+            </div>
+          </section>
+
+          <section class="group" aria-labelledby="g5">
+            <div class="group-head"><span class="group-num">05</span><h3 id="g5">Negative prompt</h3><p>What to keep out</p></div>
+            <div class="field">
+              <p class="chip-label" id="neg-label">Common problems <span style="font-weight:400;color:var(--ink-3);font-size:12.5px">— tap to add or remove</span></p>
+              <div class="chips" id="neg-chips" role="group" aria-labelledby="neg-label"></div>
+            </div>
+            <div class="field">
+              <label for="f-negcustom">Custom negatives</label>
+              <input type="text" id="f-negcustom" placeholder="e.g. sunglasses, hats, logos" />
+            </div>
+          </section>
+
+        </form>
+
+        <!-- ============ OUTPUT ============ -->
+        <div class="output-col">
+          <section class="output-panel" aria-label="Generated prompt">
+            <div class="output-head">
+              <h3>Your prompt</h3>
+              <div class="format-tabs" id="format-tabs" role="group" aria-label="Output format">
+                <button type="button" class="ftab" data-format="paragraph" aria-pressed="true">Paragraph</button>
+                <button type="button" class="ftab" data-format="comma" aria-pressed="false">Comma list</button>
+                <button type="button" class="ftab" data-format="midjourney" aria-pressed="false">Midjourney</button>
+                <button type="button" class="ftab" data-format="structured" aria-pressed="false">Structured</button>
+              </div>
+            </div>
+            <div class="prompt-box empty" id="prompt-out">Start by adding a subject in the form — your prompt will build itself here as you fill in the fields.</div>
+            <div class="neg-wrap" id="neg-wrap" hidden>
+              <p class="neg-title">NEGATIVE PROMPT</p>
+              <div class="neg-box empty" id="neg-out"></div>
+            </div>
+            <div class="stats">
+              <span id="stat-chars">0 characters</span>
+              <span id="stat-words">0 words</span>
+              <span id="stat-tokens">~0 tokens</span>
+            </div>
+            <div class="output-actions">
+              <button type="button" class="obtn primary" id="btn-copy">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                Copy prompt
+              </button>
+              <button type="button" class="obtn" id="btn-copy-neg">Copy negative</button>
+              <button type="button" class="obtn" id="btn-download">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+                .txt
+              </button>
+            </div>
+          </section>
+
+          <section class="panel side-panel" aria-label="Variations">
+            <h3>Variations</h3>
+            <p class="sub">Same subject, three different camera-and-light setups. Handy when the first render feels flat.</p>
+            <button type="button" class="btn" id="btn-variations" style="margin-bottom:12px">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 3h5v5"/><path d="M4 20L21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/></svg>
+              Generate variations
+            </button>
+            <div id="var-list"><p class="empty-note">No variations yet — add a subject first, then generate.</p></div>
+          </section>
+
+          <section class="panel side-panel" aria-label="Session history">
+            <h3>Copied this session</h3>
+            <p class="sub">Prompts you copy land here so you can grab them again. The list clears when you close the page.</p>
+            <div id="hist-list"><p class="empty-note">Nothing copied yet.</p></div>
+          </section>
+        </div>
+      </div>
+
+      <p class="foot-note">Tip: short, concrete details beat long adjective lists. Name the light, the lens, and the framing — models follow specifics.</p>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script>
+    (function(){
+      "use strict";
+      var $ = function(id){ return document.getElementById(id); };
+
+      /* ---------------- data ---------------- */
+      var STYLES = ["Photorealistic","Cinematic","Editorial fashion","Documentary","Anime","Studio Ghibli-inspired","3D render","Watercolor","Oil painting","Vintage film","Minimalist","Street photography","Product photography","Dreamy / ethereal"];
+      var PALETTES = [
+        {name:"Warm earth", value:"warm earth tones — cream, tan, terracotta and deep brown"},
+        {name:"Pastel soft", value:"soft pastel palette — blush pink, baby blue, mint and cream"},
+        {name:"Black & white", value:"black and white, monochrome"},
+        {name:"Bold primary", value:"bold saturated colors — vivid red, blue and yellow"},
+        {name:"Muted film", value:"muted desaturated film colors, faded greens and warm shadows"},
+        {name:"Neon night", value:"neon palette — electric pink, cyan and deep purple against black"},
+        {name:"Clean neutral", value:"clean neutral palette — white, light grey and soft beige"}
+      ];
+      var RATIOS = ["1:1","3:4","4:3","2:3","3:2","16:9","9:16","21:9"];
+      var NEGATIVES = ["blurry","low quality","low resolution","deformed hands","extra fingers","missing fingers","bad anatomy","distorted face","asymmetrical eyes","watermark","text","logo","cropped","out of frame","noisy / grainy","oversaturated","overexposed","cartoonish","duplicate subject"];
+      var FORMATS = { paragraph:true, comma:true, midjourney:true, structured:true };
+
+      var PRESETS = {
+        "Photoreal portrait": {
+          subject:"a young woman with long dark hair",
+          details:"natural skin texture with visible pores, soft freckles, gentle features",
+          action:"standing relaxed, one hand touching her hair",
+          expression:"soft confident smile, looking at the camera",
+          setting:"a bright studio with a plain light-grey backdrop",
+          outfit:"plain white t-shirt and blue jeans",
+          props:"",
+          colors:"clean neutral palette — white, light grey and soft beige",
+          styles:["Photorealistic"],
+          lighting:"studio softbox lighting", camera:"shot on 85mm lens, shallow depth of field",
+          composition:"waist-up shot", detail:"ultra-detailed, intricate details, sharp focus, 8k quality",
+          ratio:"3:4", extra:"photorealistic skin, no beauty filter look",
+          negs:["blurry","low quality","distorted face","watermark","overexposed","cartoonish"]
+        },
+        "Character sheet": {
+          subject:"an original character, full body",
+          details:"consistent face and hairstyle across all views, clear silhouette",
+          action:"standing in a neutral A-pose",
+          expression:"neutral calm expression",
+          setting:"plain solid white background, seamless studio floor",
+          outfit:"simple fitted outfit that shows the body shape clearly",
+          props:"",
+          colors:"",
+          styles:["Photorealistic"],
+          lighting:"soft natural daylight", camera:"shot on 50mm lens, natural perspective",
+          composition:"full-body shot, head to toe in frame", detail:"ultra-detailed, intricate details, sharp focus, 8k quality",
+          ratio:"16:9", extra:"multiple views in one image — front view, side profile and back view side by side, no text, no labels, no grid lines",
+          negs:["blurry","low quality","bad anatomy","deformed hands","extra fingers","text","watermark","cropped"]
+        },
+        "Fashion editorial": {
+          subject:"a fashion model in a striking pose",
+          details:"strong bone structure, bold makeup, slicked-back hair",
+          action:"mid-stride, coat flowing with movement",
+          expression:"fierce, distant gaze past the camera",
+          setting:"a brutalist concrete building, sharp geometric shadows",
+          outfit:"oversized structured blazer, wide-leg trousers, pointed boots",
+          props:"small structured handbag",
+          colors:"muted desaturated film colors, faded greens and warm shadows",
+          styles:["Editorial fashion","Cinematic"],
+          lighting:"dramatic side lighting", camera:"shot on 35mm lens, environmental portrait",
+          composition:"full-body shot, head to toe in frame", detail:"highly detailed, sharp focus",
+          ratio:"3:4", extra:"high-fashion magazine aesthetic, Vogue-style composition",
+          negs:["blurry","low quality","bad anatomy","watermark","oversaturated"]
+        },
+        "Product shot": {
+          subject:"a matte ceramic coffee mug with a minimal logo-free surface",
+          details:"smooth glazed finish, subtle handmade texture",
+          action:"",
+          expression:"",
+          setting:"a clean studio table with a soft gradient backdrop",
+          outfit:"",
+          props:"a few scattered coffee beans and a linen cloth beside it",
+          colors:"warm earth tones — cream, tan, terracotta and deep brown",
+          styles:["Product photography","Minimalist"],
+          lighting:"studio softbox lighting", camera:"macro lens, extreme close-up detail",
+          composition:"centered composition, symmetrical", detail:"ultra-detailed, intricate details, sharp focus, 8k quality",
+          ratio:"1:1", extra:"commercial product photography, crisp shadows, no people, no text",
+          negs:["blurry","low quality","watermark","text","logo","noisy / grainy"]
+        },
+        "Cinematic scene": {
+          subject:"a lone traveler with a worn backpack",
+          details:"weathered face, tired but determined look",
+          action:"walking away from camera down a narrow alley",
+          expression:"",
+          setting:"an old city alley at night, wet cobblestones reflecting shop signs",
+          outfit:"long dark coat, scarf, boots",
+          props:"an old paper map in one hand",
+          colors:"neon palette — electric pink, cyan and deep purple against black",
+          styles:["Cinematic"],
+          lighting:"neon night lighting", camera:"shot on 35mm lens, environmental portrait",
+          composition:"rule-of-thirds composition", detail:"highly detailed, sharp focus",
+          ratio:"21:9", extra:"anamorphic look, film grain, moody atmosphere, teal and orange grade",
+          negs:["blurry","low quality","cartoonish","watermark","overexposed"]
+        },
+        "Anime illustration": {
+          subject:"a cheerful schoolgirl with twin-tail hair",
+          details:"large expressive eyes, small fang tooth, hair ribbons",
+          action:"running toward the viewer, waving",
+          expression:"big bright smile, excited",
+          setting:"a sunny school courtyard with cherry blossom trees",
+          outfit:"school uniform with a red ribbon, pleated skirt, loafers",
+          props:"a school bag over one shoulder, falling cherry blossom petals",
+          colors:"soft pastel palette — blush pink, baby blue, mint and cream",
+          styles:["Anime"],
+          lighting:"soft natural daylight", camera:"",
+          composition:"three-quarter view", detail:"highly detailed, sharp focus",
+          ratio:"3:4", extra:"clean line art, cel shading, vibrant and cheerful",
+          negs:["blurry","low quality","bad anatomy","extra fingers","watermark"]
+        },
+        "Landscape": {
+          subject:"a terraced rice field valley between green mountains",
+          details:"mirror-like flooded paddies reflecting the sky, a small village at the valley floor",
+          action:"",
+          expression:"",
+          setting:"early morning mist drifting over the terraces",
+          outfit:"",
+          props:"a narrow footpath winding between the paddies",
+          colors:"muted desaturated film colors, faded greens and warm shadows",
+          styles:["Photorealistic","Documentary"],
+          lighting:"golden hour sunlight", camera:"wide-angle 24mm lens",
+          composition:"rule-of-thirds composition", detail:"ultra-detailed, intricate details, sharp focus, 8k quality",
+          ratio:"16:9", extra:"aerial perspective, layers of mountains fading into the distance",
+          negs:["blurry","low quality","oversaturated","watermark","noisy / grainy"]
+        },
+        "Food photo": {
+          subject:"a steaming bowl of ramen with a soft egg on top",
+          details:"rich glossy broth, springy noodles lifted by chopsticks, sliced chashu and spring onions",
+          action:"",
+          expression:"",
+          setting:"a dark wooden table in a cozy ramen shop",
+          outfit:"",
+          props:"a small side plate of gyoza and a glass of iced tea",
+          colors:"warm earth tones — cream, tan, terracotta and deep brown",
+          styles:["Product photography"],
+          lighting:"candlelight, warm and dim", camera:"macro lens, extreme close-up detail",
+          composition:"high-angle shot, looking down", detail:"ultra-detailed, intricate details, sharp focus, 8k quality",
+          ratio:"4:3", extra:"appetizing steam rising, shallow depth of field on the background",
+          negs:["blurry","low quality","watermark","oversaturated","noisy / grainy"]
+        }
+      };
+
+      var RANDOM_POOL = {
+        subjects:["a street musician with a vintage guitar","a ballet dancer mid-rehearsal","an elderly fisherman mending a net","a young chef plating a dish","a skateboarder in an empty parking lot","a botanist examining a rare orchid","a watchmaker at a cluttered workbench","a surfer walking back from the sea at dawn"],
+        settings:["a sunlit greenhouse full of hanging plants","a narrow bookshop stacked floor to ceiling","a rooftop overlooking a city skyline","a misty pine forest clearing","a retro train carriage with green velvet seats","a seaside boardwalk in the early morning"],
+        lightings:["soft natural daylight","golden hour sunlight","overcast diffused light","direct harsh flash","neon night lighting","blue hour twilight"],
+        cameras:["shot on 85mm lens, shallow depth of field","shot on 35mm lens, environmental portrait","35mm film photograph, visible grain","2000s digicam look, direct flash","shot on 50mm lens, natural perspective"],
+        styles:[["Photorealistic"],["Cinematic"],["Documentary"],["Editorial fashion"],["Street photography"]]
+      };
+
+      var VAR_COMBOS = [
+        {tag:"GOLDEN HOUR · 35MM", lighting:"golden hour sunlight", camera:"shot on 35mm lens, environmental portrait", composition:"three-quarter view"},
+        {tag:"STUDIO · 85MM PORTRAIT", lighting:"studio softbox lighting", camera:"shot on 85mm lens, shallow depth of field", composition:"close-up portrait, head and shoulders"},
+        {tag:"NIGHT FLASH · DIGICAM", lighting:"direct harsh flash", camera:"2000s digicam look, direct flash", composition:"centered composition, symmetrical"},
+        {tag:"FILM · WIDE & LOW", lighting:"overcast diffused light", camera:"35mm film photograph, visible grain", composition:"low-angle shot, looking up"}
+      ];
+
+      /* ---------------- state ---------------- */
+      var state = { styles:{}, negs:{}, ratio:"9:16", format:"paragraph", activePreset:null };
+      RATIOS.forEach(function(r){ if(r==="3:4") state.ratio=r; });
+
+      /* ---------------- chip builders ---------------- */
+      function makeChip(text, pressed, cls){
+        var b=document.createElement("button");
+        b.type="button"; b.className="chip"+(cls?" "+cls:""); b.textContent=text;
+        b.setAttribute("aria-pressed", pressed?"true":"false");
+        return b;
+      }
+      function buildChips(){
+        var sc=$("style-chips"); sc.innerHTML="";
+        STYLES.forEach(function(s){
+          var c=makeChip(s, !!state.styles[s]);
+          c.addEventListener("click",function(){ state.styles[s]=!state.styles[s]; c.setAttribute("aria-pressed", state.styles[s]?"true":"false"); markCustom(); render(); });
+          sc.appendChild(c);
+        });
+        var pc=$("palette-chips"); pc.innerHTML="";
+        PALETTES.forEach(function(p){
+          var c=makeChip(p.name,false);
+          c.addEventListener("click",function(){ $("f-colors").value=p.value; markCustom(); render(); toast("Palette added: "+p.name); });
+          pc.appendChild(c);
+        });
+        var rc=$("ratio-chips"); rc.innerHTML="";
+        RATIOS.forEach(function(r){
+          var c=makeChip(r, state.ratio===r, "ratio");
+          c.addEventListener("click",function(){
+            state.ratio=r; markCustom();
+            Array.prototype.forEach.call(rc.children,function(x){ x.setAttribute("aria-pressed", x.textContent===r?"true":"false"); });
+            render();
+          });
+          rc.appendChild(c);
+        });
+        var nc=$("neg-chips"); nc.innerHTML="";
+        NEGATIVES.forEach(function(n){
+          var c=makeChip(n, !!state.negs[n], "neg");
+          c.addEventListener("click",function(){ state.negs[n]=!state.negs[n]; c.setAttribute("aria-pressed", state.negs[n]?"true":"false"); render(); });
+          nc.appendChild(c);
+        });
+      }
+      function buildPresets(){
+        var row=$("preset-row"); row.innerHTML="";
+        Object.keys(PRESETS).forEach(function(name){
+          var b=document.createElement("button");
+          b.type="button"; b.className="preset"+(state.activePreset===name?" active":""); b.textContent=name;
+          b.addEventListener("click",function(){ applyPreset(name); });
+          row.appendChild(b);
+        });
+      }
+
+      /* ---------------- read / write fields ---------------- */
+      function val(id){ return $(id).value.trim(); }
+      function readFields(){
+        return {
+          subject:val("f-subject"), details:val("f-details"), action:val("f-action"),
+          expression:val("f-expression"), setting:val("f-setting"), outfit:val("f-outfit"),
+          props:val("f-props"), colors:val("f-colors"),
+          styles:STYLES.filter(function(s){return state.styles[s];}),
+          lighting:val("f-lighting"), camera:val("f-camera"), composition:val("f-composition"),
+          detail:val("f-detail"), extra:val("f-extra"),
+          negs:NEGATIVES.filter(function(n){return state.negs[n];}),
+          negCustom:val("f-negcustom"), ratio:state.ratio
+        };
+      }
+      function fragments(f){
+        var out=[];
+        if(f.subject) out.push(f.subject);
+        if(f.details) out.push(f.details);
+        if(f.action) out.push(f.action);
+        if(f.expression) out.push(f.expression);
+        if(f.outfit) out.push("wearing "+stripWear(f.outfit));
+        if(f.setting) out.push(f.setting);
+        if(f.props) out.push(f.props);
+        if(f.styles.length) out.push(f.styles.join(" + ").toLowerCase()+" style");
+        if(f.colors) out.push(f.colors);
+        if(f.lighting) out.push(f.lighting);
+        if(f.camera) out.push(f.camera);
+        if(f.composition) out.push(f.composition);
+        if(f.detail) out.push(f.detail);
+        if(f.extra) out.push(f.extra);
+        return out;
+      }
+      function stripWear(s){ return s.replace(/^wearing\s+/i,""); }
+      function negativeText(f){
+        var parts=f.negs.slice();
+        if(f.negCustom) f.negCustom.split(",").forEach(function(x){ x=x.trim(); if(x) parts.push(x); });
+        return parts.join(", ");
+      }
+
+      /* ---------------- formatting ---------------- */
+      function cap(s){ return s ? s.charAt(0).toUpperCase()+s.slice(1) : s; }
+      function buildPrompt(f, format){
+        var frags=fragments(f);
+        if(!frags.length) return "";
+        if(format==="comma") return frags.join(", ");
+        if(format==="midjourney"){
+          var mj=frags.join(", ")+" --ar "+f.ratio+" --v 6.1 --style raw";
+          if(f.detail) mj+=" --q 2";
+          return mj;
+        }
+        if(format==="structured"){
+          var rows=[];
+          function row(label,value){ if(value) rows.push(label+": "+value); }
+          row("Subject", f.subject);
+          row("Details", f.details);
+          row("Action / pose", f.action);
+          row("Expression", f.expression);
+          row("Outfit", f.outfit);
+          row("Setting", f.setting);
+          row("Props", f.props);
+          row("Style", f.styles.join(", "));
+          row("Colors", f.colors);
+          row("Lighting", f.lighting);
+          row("Camera", f.camera);
+          row("Composition", f.composition);
+          row("Detail level", f.detail);
+          row("Aspect ratio", f.ratio);
+          row("Extra", f.extra);
+          return rows.join("\n");
+        }
+        /* paragraph */
+        var body=frags.join(", ");
+        return cap(body)+". Aspect ratio "+f.ratio+".";
+      }
+
+      /* ---------------- render ---------------- */
+      var currentPrompt="", currentNegative="";
+      function render(){
+        var f=readFields();
+        currentPrompt = f.subject ? buildPrompt(f, state.format) : "";
+        currentNegative = negativeText(f);
+        var out=$("prompt-out");
+        if(currentPrompt){
+          out.textContent=currentPrompt;
+          out.classList.remove("empty");
+        } else {
+          out.textContent="Start by adding a subject in the form — your prompt will build itself here as you fill in the fields.";
+          out.classList.add("empty");
+        }
+        var nw=$("neg-wrap"), no=$("neg-out");
+        if(currentNegative){ nw.hidden=false; no.textContent=currentNegative; no.classList.remove("empty"); }
+        else { nw.hidden=true; no.textContent=""; }
+        var text=currentPrompt;
+        var words=text ? text.trim().split(/\s+/).length : 0;
+        $("stat-chars").textContent=text.length+" characters";
+        $("stat-words").textContent=words+" words";
+        $("stat-tokens").textContent="~"+Math.ceil(text.length/4)+" tokens";
+        $("btn-copy").disabled=!currentPrompt;
+        $("btn-download").disabled=!currentPrompt;
+        $("btn-copy-neg").disabled=!currentNegative;
+      }
+
+      /* ---------------- presets ---------------- */
+      function setSelect(id, value){
+        var sel=$(id), found=false;
+        Array.prototype.forEach.call(sel.options,function(o){ if(o.value===value||o.textContent===value) found=true; });
+        sel.value=found?value:"";
+        if(!found && value){
+          Array.prototype.forEach.call(sel.options,function(o){ if(o.textContent===value) sel.value=o.value||o.textContent; });
+        }
+      }
+      function applyPreset(name){
+        var p=PRESETS[name]; if(!p) return;
+        state.activePreset=name;
+        $("f-subject").value=p.subject||""; $("f-details").value=p.details||"";
+        $("f-action").value=p.action||""; $("f-expression").value=p.expression||"";
+        $("f-setting").value=p.setting||""; $("f-outfit").value=p.outfit||"";
+        $("f-props").value=p.props||""; $("f-colors").value=p.colors||"";
+        $("f-extra").value=p.extra||""; $("f-negcustom").value="";
+        setSelect("f-lighting", p.lighting||""); setSelect("f-camera", p.camera||"");
+        setSelect("f-composition", p.composition||""); $("f-detail").value=p.detail||"";
+        state.styles={}; (p.styles||[]).forEach(function(s){ state.styles[s]=true; });
+        state.negs={}; (p.negs||[]).forEach(function(n){ state.negs[n]=true; });
+        state.ratio=p.ratio||"1:1";
+        buildChips(); buildPresets(); render();
+        $("var-list").innerHTML='<p class="empty-note">No variations yet — add a subject first, then generate.</p>';
+        toast("Template loaded: "+name);
+      }
+      function markCustom(){
+        if(state.activePreset){ state.activePreset=null; buildPresets(); }
+      }
+
+      /* ---------------- clipboard / download ---------------- */
+      var toastTimer=null;
+      function toast(msg){
+        var t=$("toast"); t.textContent=msg; t.classList.add("show");
+        if(toastTimer) clearTimeout(toastTimer);
+        toastTimer=setTimeout(function(){ t.classList.remove("show"); },2200);
+      }
+      function copyText(text, done){
+        function fallback(){
+          var ta=document.createElement("textarea");
+          ta.value=text; ta.style.position="fixed"; ta.style.opacity="0";
+          document.body.appendChild(ta); ta.select();
+          try{ document.execCommand("copy"); }catch(e){}
+          document.body.removeChild(ta); done();
+        }
+        if(navigator.clipboard && navigator.clipboard.writeText){
+          navigator.clipboard.writeText(text).then(done, fallback);
+        } else fallback();
+      }
+      var history=[];
+      function addHistory(text){
+        if(!text) return;
+        if(history[0]===text) return;
+        history.unshift(text); if(history.length>6) history.pop();
+        var list=$("hist-list"); list.innerHTML="";
+        history.forEach(function(h){
+          var item=document.createElement("div"); item.className="hist-item";
+          var p=document.createElement("p"); p.textContent=h;
+          var b=document.createElement("button"); b.type="button"; b.className="mini-btn"; b.textContent="Copy again";
+          b.addEventListener("click",function(){ copyText(h,function(){ toast("Copied to clipboard"); }); });
+          item.appendChild(p); item.appendChild(b); list.appendChild(item);
+        });
+      }
+
+      /* ---------------- variations ---------------- */
+      function buildVariations(){
+        var f=readFields();
+        if(!f.subject){ toast("Add a subject first"); $("f-subject").focus(); return; }
+        var list=$("var-list"); list.innerHTML="";
+        var picks=VAR_COMBOS.slice();
+        /* rotate combos by current minute so repeated clicks differ a little */
+        var shift=new Date().getMinutes()%picks.length;
+        picks=picks.slice(shift).concat(picks.slice(0,shift)).slice(0,3);
+        picks.forEach(function(c){
+          var vf={}; for(var k in f) vf[k]=f[k];
+          vf.lighting=c.lighting; vf.camera=c.camera; vf.composition=c.composition;
+          vf.negs=f.negs; vf.negCustom=f.negCustom;
+          var text=buildPrompt(vf, state.format==="structured" ? "comma" : state.format);
+          var card=document.createElement("div"); card.className="var-card";
+          var tag=document.createElement("p"); tag.className="var-tag"; tag.textContent=c.tag;
+          var p=document.createElement("p"); p.textContent=text;
+          var b=document.createElement("button"); b.type="button"; b.className="mini-btn";
+          b.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy variation';
+          b.addEventListener("click",function(){ copyText(text,function(){ toast("Variation copied"); addHistory(text); }); });
+          card.appendChild(tag); card.appendChild(p); card.appendChild(b); list.appendChild(card);
+        });
+      }
+
+      /* ---------------- clear & random ---------------- */
+      function clearAll(){
+        ["f-subject","f-details","f-action","f-expression","f-setting","f-outfit","f-props","f-colors","f-extra","f-negcustom"].forEach(function(id){ $(id).value=""; });
+        ["f-lighting","f-camera","f-composition","f-detail"].forEach(function(id){ $(id).value=""; });
+        state.styles={}; state.negs={}; state.ratio="3:4"; state.activePreset=null;
+        buildChips(); buildPresets(); render();
+        $("var-list").innerHTML='<p class="empty-note">No variations yet — add a subject first, then generate.</p>';
+        toast("Cleared — fresh canvas");
+      }
+      function pick(a){ return a[Math.floor(Math.random()*a.length)]; }
+      function randomize(){
+        state.activePreset=null;
+        $("f-subject").value=pick(RANDOM_POOL.subjects);
+        $("f-setting").value=pick(RANDOM_POOL.settings);
+        setSelect("f-lighting", pick(RANDOM_POOL.lightings));
+        setSelect("f-camera", pick(RANDOM_POOL.cameras));
+        state.styles={}; pick(RANDOM_POOL.styles).forEach(function(s){ state.styles[s]=true; });
+        state.ratio=pick(RATIOS);
+        buildChips(); buildPresets(); render();
+        toast("Random combo loaded — tweak it to make it yours");
+      }
+
+      /* ---------------- events ---------------- */
+      $("builder-form").addEventListener("submit",function(e){ e.preventDefault(); });
+      $("builder-form").addEventListener("input",function(){ markCustom(); render(); });
+      $("builder-form").addEventListener("change",function(){ render(); });
+      Array.prototype.forEach.call(document.querySelectorAll(".ftab"),function(tab){
+        tab.addEventListener("click",function(){
+          state.format=tab.getAttribute("data-format");
+          Array.prototype.forEach.call(document.querySelectorAll(".ftab"),function(t){ t.setAttribute("aria-pressed", t===tab?"true":"false"); });
+          render();
+        });
+      });
+      $("btn-copy").addEventListener("click",function(){
+        if(!currentPrompt) return;
+        var text=currentPrompt;
+        copyText(text,function(){ toast("Prompt copied"); addHistory(text); });
+      });
+      $("btn-copy-neg").addEventListener("click",function(){
+        if(!currentNegative) return;
+        copyText(currentNegative,function(){ toast("Negative prompt copied"); });
+      });
+      $("btn-download").addEventListener("click",function(){
+        if(!currentPrompt) return;
+        var body="PROMPT\n"+currentPrompt+"\n";
+        if(currentNegative) body+="\nNEGATIVE PROMPT\n"+currentNegative+"\n";
+        body+="\nAspect ratio: "+state.ratio+" · Format: "+state.format+"\n";
+        var blob=new Blob([body],{type:"text/plain;charset=utf-8"});
+        var url=URL.createObjectURL(blob);
+        var a=document.createElement("a"); a.href=url; a.download="prompt.txt";
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setTimeout(function(){ URL.revokeObjectURL(url); },800);
+        toast("Downloaded prompt.txt");
+      });
+      $("btn-variations").addEventListener("click",buildVariations);
+      $("btn-clear-top").addEventListener("click",clearAll);
+      $("btn-random").addEventListener("click",randomize);
+
+      /* ---------------- init ---------------- */
+      buildChips(); buildPresets(); render();
+    })();
+    </script>
+  </body>
+</html>
