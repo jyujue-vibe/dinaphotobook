@@ -280,7 +280,7 @@
         font-size:17px;line-height:1;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;
       }
       .sheet-close:hover{border-color:var(--accent);color:var(--accent)}
-      .sheet-body{overflow-y:auto;padding:14px 18px 18px;overscroll-behavior:contain}
+      .sheet-body{flex:1 1 auto;min-height:0;overflow-y:auto;padding:14px 18px 18px;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
       .sheet-foot{
         display:flex;gap:8px;padding:12px 18px calc(12px + env(safe-area-inset-bottom));
         border-top:1px solid var(--line);flex-shrink:0;background:var(--surface);
@@ -387,9 +387,15 @@
       .modal-back.open{display:flex}
       @media (min-width:640px){.modal-back{align-items:center;padding:20px}}
       .modal{
-        background:var(--surface);color:var(--ink);width:100%;max-width:520px;max-height:82vh;overflow:auto;
+        background:var(--surface);color:var(--ink);width:100%;max-width:520px;max-height:82vh;overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;
         border-radius:16px 16px 0 0;padding:20px 20px 24px;box-shadow:0 20px 60px rgba(0,0,0,.35);
       }
+      /* visible, draggable themed scrollbar for sheet & modal scroll areas */
+      .sheet-body,.modal{scrollbar-width:thin;scrollbar-color:var(--ink-3) transparent}
+      .sheet-body::-webkit-scrollbar,.modal::-webkit-scrollbar{width:10px;height:10px}
+      .sheet-body::-webkit-scrollbar-track,.modal::-webkit-scrollbar-track{background:transparent}
+      .sheet-body::-webkit-scrollbar-thumb,.modal::-webkit-scrollbar-thumb{background:var(--ink-3);border-radius:999px;border:2px solid var(--surface);background-clip:padding-box}
+      .sheet-body::-webkit-scrollbar-thumb:hover,.modal::-webkit-scrollbar-thumb:hover{background:var(--ink-2);border:2px solid var(--surface);background-clip:padding-box}
       @media (min-width:640px){.modal{border-radius:16px}}
       .modal h3{font-family:"Archivo",sans-serif;font-size:18px;font-weight:700;margin:0}
       .modal .m-sub{color:var(--ink-2);font-size:13.5px;margin:6px 0 8px}
@@ -555,7 +561,7 @@
 
     <!-- Random settings modal -->
     <div class="modal-back" id="modal-back">
-      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" data-lenis-prevent>
         <h3 id="modal-title">Random settings</h3>
         <p class="m-sub">Choose which categories the Random button may fill in. Categories switched off are left out. Everything starts off.<span class="my">Random ခလုတ်က ဘယ် category တွေကို ဖြည့်ပေးရမလဲ ရွေးပါ။ ပိတ်ထားတဲ့ category ကို မထည့်ဘူး။ အစမှာ အကုန် ပိတ်ထားတယ်။</span></p>
         <div id="random-toggles"></div>
@@ -568,7 +574,7 @@
 
     <!-- Import confirm modal -->
     <div class="modal-back" id="import-modal-back">
-      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="import-modal-title">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="import-modal-title" data-lenis-prevent>
         <h3 id="import-modal-title">Import backup?</h3>
         <p class="m-sub">This will replace everything currently saved in this browser — your prompts, characters and random settings — with the contents of the backup file.<span class="my">ဒီ browser ထဲမှာ အခု သိမ်းထားတဲ့ prompt, character နဲ့ random ဆက်တင် အားလုံးကို backup ဖိုင်ထဲက အချက်အလက်တွေနဲ့ အစားထိုး ပစ်မှာပါ။</span></p>
         <p class="m-sub" id="import-modal-detail"></p>
@@ -6322,6 +6328,7 @@
       let characters = loadWithFallback("pb3.characters", "pb2.characters", []);
       let savedPrompts = loadWithFallback("pb3.prompts", "pb2.prompts", []);
       const RANDOM_CATS = [
+        ["preserve", "Preserve character", "Reference ပုံက မျက်နှာ နဲ့ body ကို ဒီအတိုင်း အတိအကျ ထိန်းထား (img-to-img)"],
         ["pose", "Pose", "ကိုယ်နေဟန်ထား"], ["outfit", "Outfit", "ဝတ်စုံ"], ["location", "Location", "နေရာ"],
         ["photo", "Photography style", "ဓာတ်ပုံ စတိုင်"], ["lighting", "Lighting", "အလင်း"],
         ["skin", "Skin presets", "အသားအရေ preset တွေ"], ["hairstyle", "Hairstyle", "ဆံပင်ပုံစံ"],
@@ -6618,6 +6625,16 @@
       /* ---------------- bottom sheet ---------------- */
       let sheetKey = null, draft = null;
       const sheetEl = $("#sheet"), sheetBack = $("#sheet-back");
+      /* shared page scroll lock for sheets & modals (counted, so overlapping overlays unlock correctly) */
+      let scrollLocks = 0;
+      function lockScroll(){
+        scrollLocks++;
+        if (scrollLocks === 1) { if (window.__lenis) window.__lenis.stop(); document.body.style.overflow = "hidden"; }
+      }
+      function unlockScroll(){
+        if (scrollLocks > 0) scrollLocks--;
+        if (scrollLocks === 0) { if (window.__lenis) window.__lenis.start(); document.body.style.overflow = ""; }
+      }
       function setBtnLabel(btn, en, my){
         btn.innerHTML = '<span class="bi"><span class="en">' + esc(en) + '</span><span class="my">' + esc(my) + "</span></span>";
       }
@@ -6670,15 +6687,13 @@
         $("#sheet-body").scrollTop = 0;
         sheetEl.hidden = false;
         requestAnimationFrame(() => { sheetEl.classList.add("open"); sheetBack.classList.add("open"); });
-        if (window.__lenis) window.__lenis.stop();
-        document.body.style.overflow = "hidden";
+        lockScroll();
       }
       function closeSheet(){
         if (!sheetKey && sheetEl.hidden) return;
         sheetEl.classList.remove("open");
         sheetBack.classList.remove("open");
-        if (window.__lenis) window.__lenis.start();
-        document.body.style.overflow = "";
+        unlockScroll();
         setTimeout(() => { sheetEl.hidden = true; }, 300);
         sheetKey = null; draft = null;
       }
@@ -7098,7 +7113,10 @@
           return;
         }
         on.forEach(([k]) => {
-          if (k === "pose") {
+          if (k === "preserve") {
+            state.preserve = true;
+            $("#sw-preserve").checked = true;
+          } else if (k === "pose") {
             const p = pick(POSES);
             state.pose = { pid: p.pid, angle: p.angles && p.angles.length ? pick(p.angles) : null };
             poseSystem = p.system_en;
@@ -7161,8 +7179,8 @@
           wrap.appendChild(row);
         });
       }
-      function openModal(){ renderRandomToggles(); $("#modal-back").classList.add("open"); }
-      function closeModal(){ $("#modal-back").classList.remove("open"); }
+      function openModal(){ renderRandomToggles(); const b = $("#modal-back"); if (!b.classList.contains("open")) { b.classList.add("open"); lockScroll(); } }
+      function closeModal(){ const b = $("#modal-back"); if (b.classList.contains("open")) { b.classList.remove("open"); unlockScroll(); } }
       $("#btn-random-settings").addEventListener("click", openModal);
       $("#btn-modal-close").addEventListener("click", closeModal);
       $("#btn-modal-random").addEventListener("click", () => { closeModal(); doRandom(); });
@@ -7260,11 +7278,11 @@
         });
         const detail = $("#import-modal-detail");
         if (detail) detail.textContent = "Backup contains " + np + " saved prompt" + (np === 1 ? "" : "s") + " and " + nc + " character" + (nc === 1 ? "" : "s") + ".";
-        $("#import-modal-back").classList.add("open");
+        const ib = $("#import-modal-back"); if (!ib.classList.contains("open")) { ib.classList.add("open"); lockScroll(); }
       }
       function closeImportConfirm(){
         pendingImport = null;
-        $("#import-modal-back").classList.remove("open");
+        const ib = $("#import-modal-back"); if (ib.classList.contains("open")) { ib.classList.remove("open"); unlockScroll(); }
         const inp = $("#import-file"); if (inp) inp.value = "";
       }
       function applyImport(){
